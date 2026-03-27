@@ -1,0 +1,13 @@
+lib/blog.ts
+lib/supabase.ts
+lib/dofollow.ts
+lib/sitemap-helper.ts
+components/LanguageSwitcher.tsx
+components/MarkdownLink.tsx
+app/robots.ts
+app/sitemap.xml/route.ts
+app/sitemap_de.xml/route.ts
+app/sitemap_en.xml/route.ts
+app/sitemap_es.xml/route.ts
+app/sitemap_fr.xml/route.ts
+app/sitemap_it.xml/route.ts

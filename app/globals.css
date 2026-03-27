@@ -2,4 +2,199 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design system — L'agent IA ajoute ses CSS variables ici */
+@layer base {
+  :root {
+    /* Anthracite tech background */
+    --background: 10 12 15;
+    /* Cool light foreground */
+    --foreground: 210 220 235;
+
+    /* Night-vision green — primary accent */
+    --primary: 0 210 120;
+    --primary-hover: 0 240 140;
+    --primary-foreground: 5 8 10;
+
+    /* Deep tech blue — secondary */
+    --secondary: 15 22 38;
+    --secondary-foreground: 180 200 230;
+
+    /* Electric blue — accent */
+    --accent: 30 150 255;
+    --accent-foreground: 5 8 10;
+
+    /* Dark card surface */
+    --card: 14 18 26;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(0, 210, 120, 0.04) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 20%, rgba(30, 150, 255, 0.04) 0%, transparent 50%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight text-foreground;
+  }
+}
+
+/* Scanline effect for tech feel */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 210, 120, 0.015) 2px,
+    rgba(0, 210, 120, 0.015) 4px
+  );
+}
+
+/* Tech grid background */
+.tech-grid {
+  background-image:
+    linear-gradient(rgba(30, 150, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 150, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glowing borders */
+.glow-green {
+  box-shadow: 0 0 15px rgba(0, 210, 120, 0.3), 0 0 30px rgba(0, 210, 120, 0.1);
+}
+
+.glow-blue {
+  box-shadow: 0 0 15px rgba(30, 150, 255, 0.3), 0 0 30px rgba(30, 150, 255, 0.1);
+}
+
+/* Card tech glass */
+.card-tech {
+  background: linear-gradient(135deg, rgba(14, 18, 26, 0.97), rgba(15, 22, 38, 0.85));
+  border: 1px solid rgba(30, 150, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(30, 150, 255, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+.card-tech:hover {
+  border-color: rgba(0, 210, 120, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 210, 120, 0.08);
+}
+
+/* Hero overlay */
+.hero-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(10, 12, 15, 0.92) 0%,
+    rgba(15, 22, 38, 0.80) 50%,
+    rgba(10, 12, 15, 0.95) 100%
+  );
+}
+
+/* Green line separator */
+.green-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 210, 120, 0.6), transparent);
+}
+
+/* Blue line */
+.blue-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(30, 150, 255, 0.5), transparent);
+}
+
+/* Terminal/code text */
+.text-terminal {
+  font-family: var(--font-mono);
+  color: rgb(0, 210, 120);
+}
+
+/* Section eyebrow */
+.section-eyebrow {
+  @apply text-primary font-mono font-semibold tracking-[0.25em] uppercase text-xs mb-4 block;
+}
+
+/* Buttons */
+.btn-primary {
+  @apply px-7 py-3.5 bg-primary text-primary-foreground font-sans font-bold uppercase tracking-wider text-sm;
+  @apply hover:bg-primary-hover transition-all duration-300 rounded-sm;
+  box-shadow: 0 0 20px rgba(0, 210, 120, 0.35);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(0, 210, 120, 0.55);
+}
+
+.btn-secondary {
+  @apply px-7 py-3.5 bg-transparent text-primary border border-primary/30 font-sans font-bold uppercase tracking-wider text-sm;
+  @apply hover:bg-primary/10 hover:border-primary/60 transition-all duration-300 rounded-sm;
+}
+
+/* Tag badge */
+.tag-tech {
+  @apply inline-flex items-center px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest;
+  @apply text-primary border border-primary/25 rounded-sm bg-primary/5;
+}
+
+/* Prose overrides */
+.prose h2, .prose h3, .prose h4 {
+  @apply text-primary font-heading mt-10 mb-6;
+}
+
+.prose a {
+  @apply text-accent font-semibold transition-colors hover:text-primary no-underline border-b border-accent/30 hover:border-primary;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary bg-secondary/50 p-6 my-8 font-mono italic text-sm text-foreground/70;
+  border-left-color: rgb(var(--primary));
+}
+
+.prose img {
+  @apply rounded-sm shadow-2xl my-8;
+}
+
+.prose p {
+  @apply leading-relaxed text-foreground/80 mb-6;
+}
+
+.prose ul > li::marker {
+  color: rgb(var(--primary));
+}
+
+.prose strong {
+  @apply text-primary;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes scan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}

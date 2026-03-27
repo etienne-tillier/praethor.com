@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Dark bg -->
+  <rect width="100" height="100" fill="#0a0c0f"/>
+  <!-- Tech border -->
+  <rect x="4" y="4" width="92" height="92" fill="none" stroke="#00d278" stroke-width="1" opacity="0.6"/>
+  <!-- Corner markers -->
+  <line x1="4" y1="4" x2="16" y2="4" stroke="#00d278" stroke-width="2"/>
+  <line x1="4" y1="4" x2="4" y2="16" stroke="#00d278" stroke-width="2"/>
+  <line x1="96" y1="4" x2="84" y2="4" stroke="#00d278" stroke-width="2"/>
+  <line x1="96" y1="4" x2="96" y2="16" stroke="#00d278" stroke-width="2"/>
+  <line x1="4" y1="96" x2="16" y2="96" stroke="#00d278" stroke-width="2"/>
+  <line x1="4" y1="96" x2="4" y2="84" stroke="#00d278" stroke-width="2"/>
+  <line x1="96" y1="96" x2="84" y2="96" stroke="#00d278" stroke-width="2"/>
+  <line x1="96" y1="96" x2="96" y2="84" stroke="#00d278" stroke-width="2"/>
+  <!-- Eye shape -->
+  <ellipse cx="50" cy="50" rx="26" ry="16" fill="none" stroke="#00d278" stroke-width="1.5" opacity="0.9"/>
+  <!-- Iris -->
+  <circle cx="50" cy="50" r="10" fill="none" stroke="#00d278" stroke-width="1.5"/>
+  <!-- Pupil -->
+  <circle cx="50" cy="50" r="5" fill="#00d278" opacity="0.9"/>
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="2" fill="#0a0c0f"/>
+  <!-- Scan line -->
+  <line x1="24" y1="50" x2="34" y2="50" stroke="#1e96ff" stroke-width="1" opacity="0.6"/>
+  <line x1="66" y1="50" x2="76" y2="50" stroke="#1e96ff" stroke-width="1" opacity="0.6"/>
+</svg>
