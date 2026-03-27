@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * ─── DESIGN SYSTEM ───────────────────────────────────────────────────
+ * The AI agent will add custom CSS variables, fonts, and styles here
+ * based on the site's thematic brief. This file starts empty.
+ *
+ * Example of what the agent should add:
+ *
+ * :root {
+ *   --color-primary: #2D5F2D;
+ *   --color-secondary: #8B7355;
+ *   --color-accent: #4CAF50;
+ *   --color-background: #FAFAF5;
+ * }
+ *
+ * body {
+ *   font-family: 'Inter', sans-serif;
+ *   background-color: var(--color-background);
+ * }
+ * ─────────────────────────────────────────────────────────────────────
+ */
