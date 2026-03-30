@@ -164,8 +164,63 @@ const getAllPublishedBlogPostsCached = unstable_cache(
     { revalidate: 21600 }
 );
 
+const getPublishedBlogPostsPageCached = unstable_cache(
+    async (limit: number, offset: number = 0): Promise<BlogPost[]> => {
+        const siteId = await getSiteId();
+        if (!siteId || !supabaseAdmin) return [];
+
+        const to = Math.max(offset + limit - 1, offset);
+
+        const { data, error } = await supabaseAdmin
+            .from("blog_posts")
+            .select(BLOG_LISTING_SELECT)
+            .eq("site_id", siteId)
+            .eq("status", "published")
+            .not("published_at", "is", null)
+            .order("published_at", { ascending: false })
+            .range(offset, to);
+
+        if (error) {
+            console.error("Error fetching paginated posts:", error);
+            return [];
+        }
+
+        return (data || []).map(normalizePost);
+    },
+    [`published-posts-page:${SITE_CACHE_KEY}`],
+    { revalidate: 21600 }
+);
+
+const getPublishedBlogPostsTotalCountCached = unstable_cache(
+    async (): Promise<number> => {
+        const siteId = await getSiteId();
+        if (!siteId || !supabaseAdmin) return 0;
+
+        const { count, error } = await supabaseAdmin
+            .from("blog_posts")
+            .select("id", { count: "exact", head: true })
+            .eq("site_id", siteId)
+            .eq("status", "published")
+            .not("published_at", "is", null);
+
+        if (error) {
+            console.error("Error counting published posts:", error);
+            return 0;
+        }
+
+        return count ?? 0;
+    },
+    [`published-posts-count:${SITE_CACHE_KEY}`],
+    { revalidate: 21600 }
+);
+
 export async function getPublishedBlogPosts(...args: unknown[]): Promise<BlogPost[]> {
     const { locale, limit, offset, searchTerm } = parsePublishedPostsArgs(args);
+
+    if (!locale && !searchTerm && typeof limit === "number") {
+        return getPublishedBlogPostsPageCached(limit, offset);
+    }
+
     let posts = await getAllPublishedBlogPostsCached();
 
     posts = posts.filter((post) => matchesSearch(post, searchTerm));
@@ -189,6 +244,10 @@ export async function getPublishedBlogPosts(...args: unknown[]): Promise<BlogPos
 }
 
 export async function getPublishedBlogPostsCount(searchTerm?: string): Promise<number> {
+    if (!searchTerm) {
+        return getPublishedBlogPostsTotalCountCached();
+    }
+
     const posts = await getAllPublishedBlogPostsCached();
     return posts.filter((post) => matchesSearch(post, searchTerm)).length;
 }
@@ -428,7 +487,7 @@ const getBlogPostsForSitemapCached = unstable_cache(
 
         const { data: posts, error } = await supabaseAdmin
             .from("blog_posts")
-            .select("slug, updated_at, published_at, default_locale, translations")
+            .select("slug, published_at, default_locale, translations")
             .eq("site_id", siteId)
             .eq("status", "published")
             .not("published_at", "is", null);
@@ -466,7 +525,7 @@ const getBlogPostsForSitemapCached = unstable_cache(
         }, []);
     },
     [`blog-posts-for-sitemap:${SITE_CACHE_KEY}`],
-    { revalidate: 21600 }
+    { revalidate: 86400 }
 );
 
 export async function getBlogPostsForSitemap(lang: string = "fr") {
