@@ -326,7 +326,49 @@ const getBlogPostBySlugCached = unstable_cache(
     async (slug: string): Promise<BlogPost | null> => {
         const postId = await getBlogPostIdBySlugCached(slug);
         if (!postId) return null;
-        return getBlogPostByIdCached(postId);
+
+        const post = await getBlogPostByIdCached(postId);
+        if (!post) return null;
+
+        const translations = parseTranslations(post.translations);
+        const matchedTranslation = Object.entries(translations).find(([, value]) => {
+            if (!value || typeof value !== "object") return false;
+            const translatedSlug = (value as { slug?: unknown }).slug;
+            return typeof translatedSlug === "string" && translatedSlug === slug;
+        });
+
+        if (!matchedTranslation) {
+            return post;
+        }
+
+        const [locale, value] = matchedTranslation;
+        const translation = value as Record<string, unknown>;
+
+        return {
+            ...post,
+            h1: typeof translation.h1 === "string" && translation.h1 ? translation.h1 : post.h1,
+            seo_title:
+                typeof translation.seo_title === "string" && translation.seo_title
+                    ? translation.seo_title
+                    : post.seo_title,
+            meta_description:
+                typeof translation.meta_description === "string" && translation.meta_description
+                    ? translation.meta_description
+                    : post.meta_description,
+            body_md:
+                typeof translation.body_md === "string" && translation.body_md
+                    ? translation.body_md
+                    : post.body_md,
+            excerpt:
+                typeof translation.excerpt === "string" && translation.excerpt
+                    ? translation.excerpt
+                    : post.excerpt,
+            focus_keyword:
+                typeof translation.focus_keyword === "string" && translation.focus_keyword
+                    ? translation.focus_keyword
+                    : post.focus_keyword,
+            default_locale: locale,
+        };
     },
     [`blog-post-by-slug:${SITE_CACHE_KEY}`],
     { revalidate: 21600 }
