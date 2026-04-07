@@ -17,13 +17,12 @@ const buildAlternatesByLocale = (post: { slug: string; default_locale?: string |
     ? siteOriginRaw.replace(/\/+$/, "")
     : `https://${(process.env.SITE_DOMAIN || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
 
-  if (!siteOrigin || siteOrigin === "https://") {
-    return {};
-  }
+  const buildArticleUrl = (articleSlug: string) =>
+    siteOrigin ? `${siteOrigin}/blog/${articleSlug}` : `/blog/${articleSlug}`;
 
   const languages: Record<string, string> = {};
   const defaultLocale = post.default_locale || "fr-FR";
-  languages[defaultLocale] = `${siteOrigin}/blog/${post.slug}`;
+  languages[defaultLocale] = buildArticleUrl(post.slug);
 
   if (post.translations && typeof post.translations === "object") {
     for (const [locale, value] of Object.entries(post.translations as Record<string, unknown>)) {
@@ -33,7 +32,7 @@ const buildAlternatesByLocale = (post: { slug: string; default_locale?: string |
       const status = typeof translation.status === "string" ? translation.status : "published";
 
       if (!translatedSlug || status !== "published") continue;
-      languages[locale] = `${siteOrigin}/blog/${translatedSlug}`;
+      languages[locale] = buildArticleUrl(translatedSlug);
     }
   }
 
