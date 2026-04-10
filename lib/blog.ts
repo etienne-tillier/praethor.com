@@ -6,8 +6,34 @@ export type { BlogPost } from "@/types";
 
 const SITE_ID = process.env.SITE_ID?.trim() || null;
 const SITE_DOMAIN = (process.env.SITE_DOMAIN || "").replace(/^https?:\/\//, "");
-const SITE_CACHE_KEY = SITE_ID || SITE_DOMAIN || "unknown-site";
+const CONTENT_CACHE_VERSION = process.env.CONTENT_CACHE_VERSION?.trim() || "v2";
+const SITE_CACHE_KEY = `${SITE_ID || SITE_DOMAIN || "unknown-site"}:${CONTENT_CACHE_VERSION}`;
 export const POSTS_PER_PAGE = 12;
+
+type BlogCategory = NonNullable<BlogPost["categories"]>[number];
+type TranslationEntry = {
+    slug?: string;
+    h1?: string;
+    seo_title?: string;
+    meta_description?: string;
+    body_md?: string;
+    excerpt?: string;
+    focus_keyword?: string;
+    faqs?: unknown;
+    status?: string;
+};
+type TranslationMap = Record<string, TranslationEntry>;
+type RawCategoryRelation = {
+    category?: BlogCategory | BlogCategory[] | null;
+};
+type RawBlogPost = Omit<BlogPost, "categories" | "cover" | "author" | "translations"> & {
+    cover?: BlogPost["cover"] | BlogPost["cover"][] | null;
+    author?: BlogPost["author"] | BlogPost["author"][] | null;
+    categories?: Array<RawCategoryRelation | BlogCategory | null> | null;
+    translations?: unknown;
+    faqs?: unknown;
+    meta_title?: string;
+};
 
 const BLOG_LISTING_SELECT = `
   id, slug, h1, seo_title, meta_description, published_at, default_locale, excerpt,
@@ -50,31 +76,56 @@ async function getSiteId(): Promise<string | null> {
     return getCachedSiteId();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizePost(post: any): BlogPost {
-    if (typeof post.translations === "string") { try { post.translations = JSON.parse(post.translations); } catch { /* noop */ } }
-    if (typeof post.faqs === "string") { try { post.faqs = JSON.parse(post.faqs); } catch { /* noop */ } }
+function normalizePost(post: RawBlogPost): BlogPost {
+    const parsedTranslations = parseTranslations(post.translations);
     return {
         ...post,
+        translations: parsedTranslations,
         meta_title: post.seo_title || post.meta_title,
-        cover: Array.isArray(post.cover) ? post.cover[0] : post.cover,
-        author: Array.isArray(post.author) ? post.author[0] : post.author,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        categories: post.categories?.map((c: any) => c.category).filter(Boolean) || [],
+        cover: Array.isArray(post.cover) ? (post.cover[0] ?? undefined) : (post.cover ?? undefined),
+        author: Array.isArray(post.author) ? (post.author[0] ?? undefined) : (post.author ?? undefined),
+        categories: (post.categories || [])
+            .map((categoryOrRelation) => {
+                if (!categoryOrRelation) return null;
+                const resolved = "category" in categoryOrRelation
+                    ? (categoryOrRelation.category ?? null)
+                    : categoryOrRelation;
+                return Array.isArray(resolved) ? (resolved[0] ?? null) : resolved;
+            })
+            .filter((category): category is BlogCategory => Boolean(category)),
     };
 }
 
-function parseTranslations(translations: unknown): Record<string, any> {
+function parseTranslations(translations: unknown): TranslationMap {
     if (!translations) return {};
     if (typeof translations === "string") {
         try {
-            return JSON.parse(translations);
+            return parseTranslations(JSON.parse(translations));
         } catch {
             return {};
         }
     }
-    if (typeof translations === "object") {
-        return translations as Record<string, any>;
+    if (typeof translations === "object" && !Array.isArray(translations)) {
+        const raw = translations as Record<string, unknown>;
+        const parsed: TranslationMap = {};
+
+        for (const [locale, value] of Object.entries(raw)) {
+            if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+            const source = value as Record<string, unknown>;
+            parsed[locale] = {
+                slug: typeof source.slug === "string" ? source.slug : undefined,
+                h1: typeof source.h1 === "string" ? source.h1 : undefined,
+                seo_title: typeof source.seo_title === "string" ? source.seo_title : undefined,
+                meta_description: typeof source.meta_description === "string" ? source.meta_description : undefined,
+                body_md: typeof source.body_md === "string" ? source.body_md : undefined,
+                excerpt: typeof source.excerpt === "string" ? source.excerpt : undefined,
+                focus_keyword: typeof source.focus_keyword === "string" ? source.focus_keyword : undefined,
+                faqs: source.faqs,
+                status: typeof source.status === "string" ? source.status : undefined,
+            };
+        }
+
+        return parsed;
     }
     return {};
 }
@@ -92,12 +143,12 @@ function matchesSearch(post: BlogPost, rawSearchTerm?: string | null): boolean {
         post.seo_title,
         post.meta_description,
         post.excerpt,
-        ...((post.categories || []).flatMap((category: any) => [category?.slug, category?.label])),
-        ...Object.values(translations).flatMap((translation: any) => [
-            translation?.slug,
-            translation?.h1,
-            translation?.seo_title,
-            translation?.meta_description,
+        ...((post.categories || []).flatMap((category) => [category?.slug, category?.label])),
+        ...Object.values(translations).flatMap((translation) => [
+            translation.slug,
+            translation.h1,
+            translation.seo_title,
+            translation.meta_description,
         ]),
     ]
         .filter(Boolean)
@@ -252,10 +303,30 @@ export async function getPublishedBlogPostsCount(searchTerm?: string): Promise<n
     return posts.filter((post) => matchesSearch(post, searchTerm)).length;
 }
 
+const toLegacyEncodedSlug = (slug: string): string | null => {
+    if (!slug) return null;
+
+    const decodedSlug = (() => {
+        try {
+            return decodeURIComponent(slug);
+        } catch {
+            return slug;
+        }
+    })();
+
+    const encodedSlug = encodeURIComponent(decodedSlug)
+        .toLowerCase()
+        .replace(/%/g, "");
+
+    if (!encodedSlug || encodedSlug === slug.toLowerCase()) return null;
+    return encodedSlug;
+};
+
 const getBlogPostIdBySlugCached = unstable_cache(
     async (slug: string): Promise<string | null> => {
         const siteId = await getSiteId();
         if (!siteId || !supabaseAdmin) return null;
+        const legacyEncodedSlug = toLegacyEncodedSlug(slug);
 
         const { data: directPost, error: directError } = await supabaseAdmin
             .from("blog_posts")
@@ -268,17 +339,24 @@ const getBlogPostIdBySlugCached = unstable_cache(
         if (directError) return null;
         if (directPost?.id) return directPost.id;
 
-        const legacyEncodedSlug = (() => {
-            const encoded = encodeURIComponent(slug)
-                .toLowerCase()
-                .replace(/%/g, "");
+        if (legacyEncodedSlug) {
+            const { data: encodedPost, error: encodedError } = await supabaseAdmin
+                .from("blog_posts")
+                .select("id")
+                .eq("site_id", siteId)
+                .eq("status", "published")
+                .eq("slug", legacyEncodedSlug)
+                .maybeSingle();
 
-            return encoded && encoded !== slug.toLowerCase() ? encoded : null;
-        })();
+            if (encodedError) return null;
+            if (encodedPost?.id) return encodedPost.id;
+        }
 
-        const fallbackCandidates = legacyEncodedSlug
-            ? [slug, legacyEncodedSlug]
-            : [slug];
+        const fallbackCandidates = [
+            slug,
+            ...(legacyEncodedSlug ? [legacyEncodedSlug] : []),
+            ...(slug.startsWith("blog-") ? [slug.replace(/^blog-/, "")] : [`blog-${slug}`]),
+        ];
 
         for (const candidateSlug of fallbackCandidates) {
             const { data: fallbackPostId, error: fallbackError } = await supabaseAdmin.rpc(
@@ -478,8 +556,8 @@ export async function getPostTranslations(post: BlogPost) {
         allTranslations[post.default_locale] = { slug: post.slug };
     }
 
-    Object.entries(translations).forEach(([locale, translation]: [string, any]) => {
-        if (translation?.status === "published" && translation?.slug) {
+    Object.entries(translations).forEach(([locale, translation]) => {
+        if (translation.status === "published" && translation.slug) {
             allTranslations[locale] = { slug: translation.slug };
         }
     });
@@ -538,23 +616,14 @@ const getBlogPostsForSitemapCached = unstable_cache(
 
         const langLower = lang.toLowerCase();
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return posts.reduce((acc: any[], post) => {
+        return posts.reduce<Array<{ slug: string; updated_at: string | null }>>((acc, post) => {
             let finalSlug = post.slug;
             let isMatch = false;
 
             if (post.default_locale?.toLowerCase().startsWith(langLower)) isMatch = true;
 
             if (post.translations) {
-                let translations = post.translations;
-                if (typeof translations === "string") {
-                    try {
-                        translations = JSON.parse(translations);
-                    } catch {
-                        /* noop */
-                    }
-                }
-
+                const translations = parseTranslations(post.translations);
                 const matchingKey = Object.keys(translations).find((key) => key.toLowerCase().startsWith(langLower));
                 if (matchingKey) {
                     isMatch = true;
