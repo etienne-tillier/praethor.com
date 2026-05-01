@@ -31,7 +31,7 @@ const buildAlternatesByLocale = (post: { slug: string; default_locale?: string |
       const translatedSlug = typeof translation.slug === "string" ? translation.slug : "";
       const status = typeof translation.status === "string" ? translation.status : "published";
 
-      if (!translatedSlug || status !== "published") continue;
+      if (!translatedSlug || translatedSlug === post.slug || status !== "published") continue;
       languages[locale] = buildArticleUrl(translatedSlug);
     }
   }

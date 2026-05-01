@@ -74,6 +74,8 @@ export function LanguageSwitcher({
     currentSlug: string;
     className?: string;
 }) {
+  // Legacy translations are intentionally hidden from the UI; unique translated URLs remain reachable for indexing.
+  return null;
     const otherLinks = getAvailableLanguages(post, currentSlug);
 
     if (otherLinks.length === 0) return null;

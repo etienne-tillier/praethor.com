@@ -23,6 +23,8 @@ export function getAvailableLanguages(post: BlogPost, currentSlug: string): Lang
 }
 
 export function LanguageSwitcher({ post, currentSlug, className = "" }: { post: BlogPost; currentSlug: string; className?: string }) {
+  // Legacy translations are intentionally hidden from the UI; unique translated URLs remain reachable for indexing.
+  return null;
     const otherLinks = getAvailableLanguages(post, currentSlug);
     if (otherLinks.length === 0) return null;
     return (

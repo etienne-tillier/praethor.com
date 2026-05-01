@@ -75,7 +75,6 @@ export const revalidate = 21600; // 6h
 import { MarkdownLink } from "@/components/MarkdownLink";
 import { injectDofollowMarker } from "@/lib/dofollow";
 import { getBlogPostBySlug } from "@/lib/blog";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
@@ -85,11 +84,13 @@ const post = await getBlogPostBySlug(slug);
 if (!post) return notFound();
 
 // Traduction :
+// Les traductions legacy restent accessibles/indexables uniquement via leur slug distinct.
+// Ne jamais appliquer une traduction si son slug est identique au slug principal.
 let displayH1 = post.h1;
 let displayBody = post.body_md;
 if (post.slug !== slug && post.translations) {
   for (const [_key, val] of Object.entries(post.translations)) {
-    if ((val as any).slug === slug) {
+    if ((val as any).slug === slug && (val as any).status === "published") {
       displayH1 = (val as any).h1 || displayH1;
       displayBody = (val as any).body_md || displayBody;
       break;
@@ -104,8 +105,9 @@ const bodyMd = injectDofollowMarker(displayBody || "");
     width={1200} height={630} priority className="w-full rounded-lg object-cover" />
 )}
 
-// 2. SÉLECTEUR DE LANGUE — OBLIGATOIRE
-<LanguageSwitcher post={post} currentSlug={slug} />
+// 2. PAS DE SÉLECTEUR DE LANGUE VISIBLE
+// Ne pas afficher de LanguageSwitcher ni de liens "Disponible en".
+// Les anciennes URLs traduites distinctes restent servies par lib/blog.ts et les sitemaps.
 
 // 3. CONTENU
 <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: MarkdownLink }}>
