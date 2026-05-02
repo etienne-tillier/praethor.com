@@ -11,7 +11,7 @@ export async function generateSitemapXml(
     if (lang === "fr") {
         urls = staticPages.map((route) => ({ loc: `${BASE_URL}${route}`, lastmod: new Date().toISOString() }));
     }
-    urls = [...urls, ...posts.map((post: { slug: string; updated_at?: string }) => ({
+    urls = [...urls, ...posts.map((post: { slug: string; updated_at?: string | null }) => ({
         loc: `${BASE_URL}/blog/${post.slug}`, lastmod: post.updated_at || new Date().toISOString(),
     }))];
     return `<?xml version="1.0" encoding="UTF-8"?>

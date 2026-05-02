@@ -33,7 +33,7 @@ export async function generateSitemapXml(
     // Blog posts for this locale
     urls = [
         ...urls,
-        ...posts.map((post: { slug: string; updated_at?: string }) => ({
+        ...posts.map((post: { slug: string; updated_at?: string | null }) => ({
             loc: `${BASE_URL}/blog/${post.slug}`,
             lastmod: post.updated_at || new Date().toISOString(),
         })),

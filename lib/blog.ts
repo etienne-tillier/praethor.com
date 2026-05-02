@@ -209,7 +209,7 @@ const getAllPublishedBlogPostsCached = unstable_cache(
             return [];
         }
 
-        return (data || []).map(normalizePost);
+        return (data || []).map((post) => normalizePost(post as unknown as RawBlogPost));
     },
     [`published-posts:${SITE_CACHE_KEY}`],
     { revalidate: 21600 }
@@ -236,7 +236,7 @@ const getPublishedBlogPostsPageCached = unstable_cache(
             return [];
         }
 
-        return (data || []).map(normalizePost);
+        return (data || []).map((post) => normalizePost(post as unknown as RawBlogPost));
     },
     [`published-posts-page:${SITE_CACHE_KEY}`],
     { revalidate: 21600 }
@@ -394,7 +394,7 @@ const getBlogPostByIdCached = unstable_cache(
             .single();
 
         if (error || !post) return null;
-        return normalizePost(post);
+        return normalizePost(post as unknown as RawBlogPost);
     },
     [`blog-post-by-id:${SITE_CACHE_KEY}`],
     { revalidate: 21600 }
